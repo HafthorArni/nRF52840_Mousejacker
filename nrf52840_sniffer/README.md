@@ -1,13 +1,15 @@
 # nRF52840 Sniffer and Replay Tool
 
 This is the PlatformIO project for the Adafruit Feather nRF52840 Express used
-as a low-level 2.4 GHz sniffer and replay device.
+as a low-level 2.4 GHz sniffer, packet analyzer, and replay device.
 
 It implements:
 
-- Channel sweeping using RSSI.
-- The "preamble trick" for promiscuous capture.
-- Interactive serial UI for on-the-fly tuning of RADIO registers.
+- RSSI-based channel sweeping to lock onto active channels.
+- A queue-based capture/processing pipeline to reduce packet loss during heavy serial output.
+- Interactive serial UI for on-the-fly tuning of nRF52 RADIO registers.
+- Smart active address discovery using raw capture, bit shifting, sliding-window parsing, and software CRC matching.
+- Preset-based multi-pipe scanning for promiscuous-style capture experiments.
 - Recording and replay of captured packets.
 
 ## Hardware overview
@@ -26,8 +28,10 @@ Feather nRF52840 sniffer with external nRF24L01+ module:
 There are two variants of the Feather firmware:
 
 - `src/main_sniffer_with_nrf24.cpp`  
-  Default build. Sniffer firmware that assumes an external nRF24L01+ module is
-  connected to the Feather (used for validation / loopback tests).
+  Default build. Full-featured sniffer firmware with an attached external
+  nRF24L01+ module used as a local target transmitter for validation and
+  loopback-style testing. This version includes smart address discovery,
+  packet queueing, replay support, and expanded interactive radio controls.
 
 - `extras/main_sniffer_standalone.cpp`  
   Alternate version that runs the sniffer without any external nRF24 module
@@ -69,12 +73,47 @@ Typical usage is via:
 
 at 250000 baud.
 
-Example commands:
-- `h` - for help
-- `W` – toggle whitening (`PCNF1.WHITEEN`)
-- `D` – toggle data rate (1 Mbps / 2 Mbps)
-- `C` – cycle CRC length (off / 1 byte / 2 bytes)
-- `b`, `l`, `s`, `t`, `K` – adjust `PCNF0` / `PCNF1` packet format fields
-- `X` – run 1-byte prefix scan
-- `Y` – run next-byte base address scan
+Key capabilities include:
 
+- channel sweep and manual channel control
+- live tuning of packet format fields (`BALEN`, `LFLEN`, `S1LEN`, `STATLEN`)
+- CRC length/profile selection
+- address preset cycling and pipe focusing
+- smart address discovery
+- packet recording and replay
+- verbose vs clean payload output modes
+
+### Common commands
+
+General:
+- `h` - show help
+- `P` - print current configuration
+- `S` - run a channel sweep and lock to the strongest active channel
+- `T`, `[`, `]` - adjust RSSI print threshold
+- `c`, `+`, `-` - set or step the current channel
+
+Address / discovery:
+- `M` - manually enter an address (`AA 12 34 ...`)
+- `n` - cycle built-in address presets
+- `A` - listen on all pipes (preset mode)
+- `0`-`7` - focus on a specific pipe (preset mode)
+- `X` - start smart active address discovery
+- `Z` - clear the current manual address and return to the default `0xAA`
+
+Radio format / decoding:
+- `W` - toggle whitening
+- `D` - toggle data rate (1 Mbps / 2 Mbps)
+- `C` - cycle CRC length (off / 1 byte / 2 bytes)
+- `V` - cycle CRC polynomial / init profiles
+- `b`, `l`, `s`, `t`, `K` - adjust `PCNF0` / `PCNF1` packet format fields
+- `L` - cycle preamble length mode
+- `e` - toggle payload endianness
+- `i` - toggle CRC address inclusion
+- `p` - toggle header parsing
+- `<`, `>` - bit-shift displayed payload left / right
+
+Output / replay:
+- `o` - toggle verbose vs clean payload-only output
+- `R` - start / stop packet recording
+- `f` - replay recorded packets
+- `r` - reapply the radio with the current settings
