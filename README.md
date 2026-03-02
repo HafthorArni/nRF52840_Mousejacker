@@ -70,4 +70,4 @@ each subfolder.
 
 
 ### Report
-will be linked here when final submission has been made
+[Project Report (PDF)](docs/project_report_CSDA.pdf)
