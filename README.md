@@ -13,11 +13,6 @@ The goal is to develope a standalone device capable of sniffing, analyzing, and 
 - `metro-echo-target/`  
   PlatformIO project for the Metro M4 + nRF24L01+ "echo target".
 
-- `graphics/`  
-  Shared schematic / wiring figures used in the report and READMEs.
-
-- `report/` (optional)  
-  LaTeX report and figures, if included.
 
 Each subfolder has its own `platformio.ini` and its own README with more details.
 
